@@ -7,61 +7,65 @@ class NeuroNet:
     def __init__(self, neuronList, E, A, isBiasNeuronEnabled):
         self.E = E #learning rate
         self.A = A #momentum
-        self.neurons = []
-        self.output = []
+        self.inputs = []
+        self.outputs = []
         self.idealOutput = []
         self.isBiasNeuronEnabled = isBiasNeuronEnabled
         
+        
         # Creating input layer neurons
-        inputNeurons = []
+        currentLayer = []
+        previousLayer = []
         for i in range(len(neuronList[0][0])):
-            inputNeurons.append(InputNeuron())
+            self.inputs.append(InputNeuron())
         if isBiasNeuronEnabled:
-            inputNeurons.append(BiasNeuron())
-        self.neurons.append(inputNeurons)
+            self.inputs.append(BiasNeuron())
+        previousLayer = self.inputs
 
         # Creating hidden layer neurons
         for i in range(len(neuronList) - 1):
-            hiddenNeuronsLayer = []
+            currentLayer = []
             for j in range(len(neuronList[i])):
                 neuron = Neuron()
-                hiddenNeuronsLayer.append(neuron) 
+                currentLayer.append(neuron) 
                 for k in range(len(neuronList[i][j])):
                     sinaps = Sinaps(neuronList[i][j][k], neuron)
-                    self.neurons[-1][k].addOutputSinaps(sinaps)
+                    sinaps.inputNeuron = previousLayer[k]
+                    previousLayer[k].addOutputSinaps(sinaps)
                 if isBiasNeuronEnabled:
                     sinaps = Sinaps(1, neuron) ## TODO: weight
-                    self.neurons[-1][-1].addOutputSinaps(sinaps)
+                    previousLayer[-1].addOutputSinaps(sinaps)
             if isBiasNeuronEnabled:
-                hiddenNeuronsLayer.append(BiasNeuron())
-            self.neurons.append(hiddenNeuronsLayer)
+                currentLayer.append(BiasNeuron())
+            previousLayer = currentLayer
 
         # Creating output layer neurons
         i = len(neuronList) - 1
-        outputNeuronsLayer = []
+        self.outputs = []
         for j in range(len(neuronList[i])):
             neuron = Neuron()
-            outputNeuronsLayer.append(neuron) 
+            self.outputs.append(neuron) 
             for k in range(len(neuronList[i][j])):
                 sinaps = Sinaps(neuronList[i][j][k], neuron)
-                self.neurons[-1][k].addOutputSinaps(sinaps)
+                sinaps.inputNeuron = previousLayer[k]
+                previousLayer[k].addOutputSinaps(sinaps)
             if isBiasNeuronEnabled:
                     sinaps = Sinaps(1, neuron) ## TODO: weight
-                    self.neurons[-1][-1].addOutputSinaps(sinaps)
-        self.neurons.append(outputNeuronsLayer)
+                    previousLayer[-1].addOutputSinaps(sinaps)
 
     def calculateWithInput(self, inputValues, idealOutput):
         self.output = []
         self.idealOutput = idealOutput
-        if len(inputValues) != len(self.neurons[0]):
+        if len(inputValues) != (len(self.inputs) - 1):
             print("WARNING: ---Incorrect input for neuroNet---")
+            return 1
 
-        for i in range(len(inputValues)):
-            self.neurons[0][i].value = inputValues[i]
-            self.neurons[0][i].throwThrough()
+        for i in range(len(inputValues) - 1):
+            self.inputs[i].value = inputValues[i]
+            self.inputs[i].throwThrough()
         
-        for i in range(len(self.neurons[-1])):
-            self.output.append(self.neurons[-1][i].value)
+        for i in range(len(self.outputs)):
+            self.output.append(self.outputs[i].value)
         self.calcMSE(idealOutput)
 
     def calcMSE(self, idealOutput):
@@ -72,28 +76,31 @@ class NeuroNet:
         result = result/len(self.output)
         self.MSE = result
 
-    def getSinapsesWeightMap(self):
-        allSinapses = []
-        for i in range(1, len(self.neurons)):
-            layerSinapses = []
-            for neuron in self.neurons[i]:
-                neuronSinaps = []
-                for sinaps in neuron.inputSinaps:
-                    neuronSinaps.append(sinaps.weight)
-                layerSinapses.append(neuronSinaps)
-            allSinapses.append(layerSinapses)
-        return allSinapses
+    # def getSinapsesWeightMap(self):
+    #     allSinapses = []
+    #     for i in range(1, len(self.neurons)):
+    #         layerSinapses = []
+    #         for neuron in self.neurons[i]:
+    #             neuronSinaps = []
+    #             for sinaps in neuron.inputSinaps:
+    #                 neuronSinaps.append(sinaps.weight)
+    #             layerSinapses.append(neuronSinaps)
+    #         allSinapses.append(layerSinapses)
+    #     return allSinapses
 
     ###
     ### Calculate deltas and update weights
     def calcDeltas(self):
 
-        for i in range(len(self.neurons[-1])):
-            neuron = self.neurons[-1][i]
+        for i in range(len(self.outputs)):
+            neuron = self.outputs[i]
             neuron.delta = (self.idealOutput[i]-neuron.value) * ((1-neuron.value)*neuron.value)
 
-        for i in range(len(self.neurons)-2, -1, -1):
-            for neuron in self.neurons[i]:
+        # got layar from right. Take first neuron in layer and get its input sinapses to get lefter neurons
+        rightNeuron = self.outputs[0]
+        while (rightNeuron):
+            for inputSinaps in rightNeuron.inputSinaps:
+                neuron = inputSinaps.inputNeuron
                 for sinaps in neuron.outputSinaps:
                     neuron.delta += sinaps.weight * sinaps.outNeuron.delta
                     grad = neuron.value * sinaps.outNeuron.delta
@@ -101,8 +108,13 @@ class NeuroNet:
                     sinaps.weight += sinapsDelta
                     sinaps.previousDelta = sinapsDelta
                 neuron.delta *= (1 - neuron.value) * neuron.value
+            rightNeuron = rightNeuron.inputSinaps[0].inputNeuron
 
     def train(self, viborka):
+        # TODO
+        pass
+
+    def validateNeuronList(self, viborka):
         # TODO
         pass
 
@@ -112,7 +124,7 @@ class Neuron(object):
         self.value = 0
         self.inputSinaps = []
         self.outputSinaps = []
-        self.__cacheOfInput = []
+        self.__cacheOfInput = [] ## TODO: change kostil
         self.delta = 0
 
     ###
@@ -139,6 +151,9 @@ class Neuron(object):
         self.value += sinaps.value
 
         # Check calculate all input sinaps
+        if ((len(self.inputSinaps) == 1) and (self.inputSinaps[0].inputNeuron is BiasNeuron)):
+            self.value += self.inputSinaps[0].weight
+            self.inputSinaps = []
         if (len(self.inputSinaps)):
             return
         
@@ -203,11 +218,12 @@ class Sinaps:
         self.value = 0
         self.weight = weight
         self.outNeuron = outNeuron
+        self.inputNeuron = 0
         outNeuron.addInputSinaps(self)
         self.previousDelta = 0
     
     ###
-    ### set value with triggering next neuron
+    ### get value with triggering next neuron
     def getValue(self, value):
         self.value = self.weight * value
         self.outNeuron.addValue(self)
@@ -225,13 +241,15 @@ for i in range(100000):
     if i>990000:
         print(mse/4)
 
-print(net.getSinapsesWeightMap())
+# print(net.getSinapsesWeightMap())
 for v in viborka:
     net.calculateWithInput(v[0], v[1])
     print("\n")
     print("Input: ", v[0], " Expected output: ", v[1])
     print("Output: ", net.output)
     print("MSE: ", net.MSE)
+
+    
 
 # neuronList = [[[0.5]], [[-2.3]]]
 # viborka = [[[0], [32]], [[8], [46.4]], [[15], [59]], [[22], [71,6]], [[38], [100.4]]]
