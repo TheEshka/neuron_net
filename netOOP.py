@@ -4,21 +4,24 @@ import math
 class NeuroNet:
     
     # TODO: add bias sinaps
-    def __init__(self, neuronList, E, A):
+    def __init__(self, neuronList, E, A, isBiasNeuronEnabled):
         self.E = E #learning rate
         self.A = A #momentum
         self.neurons = []
         self.output = []
         self.idealOutput = []
+        self.isBiasNeuronEnabled = isBiasNeuronEnabled
         
-        # Creating input neurons
+        # Creating input layer neurons
         inputNeurons = []
         for i in range(len(neuronList[0][0])):
             inputNeurons.append(InputNeuron())
+        if isBiasNeuronEnabled:
+            inputNeurons.append(BiasNeuron())
         self.neurons.append(inputNeurons)
 
-        # Creating hidden&output neurons
-        for i in range(len(neuronList)):
+        # Creating hidden layer neurons
+        for i in range(len(neuronList) - 1):
             hiddenNeuronsLayer = []
             for j in range(len(neuronList[i])):
                 neuron = Neuron()
@@ -26,7 +29,26 @@ class NeuroNet:
                 for k in range(len(neuronList[i][j])):
                     sinaps = Sinaps(neuronList[i][j][k], neuron)
                     self.neurons[-1][k].addOutputSinaps(sinaps)
+                if isBiasNeuronEnabled:
+                    sinaps = Sinaps(1, neuron) ## TODO: weight
+                    self.neurons[-1][-1].addOutputSinaps(sinaps)
+            if isBiasNeuronEnabled:
+                hiddenNeuronsLayer.append(BiasNeuron())
             self.neurons.append(hiddenNeuronsLayer)
+
+        # Creating output layer neurons
+        i = len(neuronList) - 1
+        outputNeuronsLayer = []
+        for j in range(len(neuronList[i])):
+            neuron = Neuron()
+            outputNeuronsLayer.append(neuron) 
+            for k in range(len(neuronList[i][j])):
+                sinaps = Sinaps(neuronList[i][j][k], neuron)
+                self.neurons[-1][k].addOutputSinaps(sinaps)
+            if isBiasNeuronEnabled:
+                    sinaps = Sinaps(1, neuron) ## TODO: weight
+                    self.neurons[-1][-1].addOutputSinaps(sinaps)
+        self.neurons.append(outputNeuronsLayer)
 
     def calculateWithInput(self, inputValues, idealOutput):
         self.output = []
@@ -158,6 +180,21 @@ class InputNeuron(Neuron):
             sinaps.getValue(self.value)
 
 
+class HiddenNeuron(Neuron):
+    pass
+
+
+class OutputNeuron(Neuron):
+    pass
+
+
+class BiasNeuron(Neuron):
+    
+    def __init__(self):
+        super(BiasNeuron, self).__init__()
+        self.__value = 1
+
+
 class Sinaps:
 
     ###
@@ -176,40 +213,40 @@ class Sinaps:
         self.outNeuron.addValue(self)
 
 
-# neuronList = [[[0.45, -0.12], [0.78, 0.13]],[[1.5, -2.3]]]
-# viborka = [[[0, 0], [0]], [[0, 1], [1]], [[1, 0], [1]], [[1, 1], [0]]]
-# net = NeuroNet(neuronList, 0.7, 0.3)
-# for i in range(1000000):
-#     mse = 0
-#     for v in viborka:
-#         net.calculateWithInput(v[0], v[1])
-#         net.calcDeltas()
-#         mse += net.MSE
-#     if i>990000:
-#         print(mse/4)
-
-# print(net.getSinapsesWeightMap())
-# for v in viborka:
-#     net.calculateWithInput(v[0], v[1])
-#     print("\n")
-#     print("Input: ", v[0], " Expected output: ", v[1])
-#     print("Output: ", net.output)
-#     print("MSE: ", net.MSE)
-
-neuronList = [[[0.5]], [[-2.3]]]
-viborka = [[[0], [32]], [[8], [46.4]], [[15], [59]], [[22], [71,6]], [[38], [100.4]]]
-net = NeuroNet(neuronList, 0.7, 0.3)
-for i in range(1000):
-    mse = 0 
+neuronList = [[[0.45, -0.12], [0.78, 0.13]],[[1.5, -2.3]]]
+viborka = [[[0, 0], [0]], [[0, 1], [1]], [[1, 0], [1]], [[1, 1], [0]]]
+net = NeuroNet(neuronList, 0.7, 0.3, True)
+for i in range(100000):
+    mse = 0
     for v in viborka:
         net.calculateWithInput(v[0], v[1])
-        net.calcDeltas
+        net.calcDeltas()
         mse += net.MSE
+    if i>990000:
+        print(mse/4)
 
-    print(mse)
+print(net.getSinapsesWeightMap())
+for v in viborka:
+    net.calculateWithInput(v[0], v[1])
+    print("\n")
+    print("Input: ", v[0], " Expected output: ", v[1])
+    print("Output: ", net.output)
+    print("MSE: ", net.MSE)
 
-net.calculateWithInput([12], [53.6])
-print(net.output)
+# neuronList = [[[0.5]], [[-2.3]]]
+# viborka = [[[0], [32]], [[8], [46.4]], [[15], [59]], [[22], [71,6]], [[38], [100.4]]]
+# net = NeuroNet(neuronList, 0.7, 0.3, True)
+# for i in range(1000):
+#     mse = 0 
+#     for v in viborka:
+#         net.calculateWithInput(v[0], v[1])
+#         net.calcDeltas
+#         mse += net.MSE
+
+#     print(mse)
+
+# net.calculateWithInput([12], [53.6])
+# print(net.output)
 
 
 
