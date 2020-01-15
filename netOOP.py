@@ -30,10 +30,13 @@ class NeuroNet:
                 currentLayer.append(neuron) 
                 for k in range(len(neuronList[i][j])):
                     sinaps = Sinaps(neuronList[i][j][k], neuron)
+                    neuron.addInputSinaps(sinaps)
                     sinaps.inputNeuron = previousLayer[k]
                     previousLayer[k].addOutputSinaps(sinaps)
                 if isBiasNeuronEnabled:
                     sinaps = Sinaps(1, neuron) ## TODO: weight
+                    neuron.addInputSinaps(sinaps)
+                    sinaps.inputNeuron = previousLayer[-1]
                     previousLayer[-1].addOutputSinaps(sinaps)
             if isBiasNeuronEnabled:
                 currentLayer.append(BiasNeuron())
@@ -47,33 +50,33 @@ class NeuroNet:
             self.outputs.append(neuron) 
             for k in range(len(neuronList[i][j])):
                 sinaps = Sinaps(neuronList[i][j][k], neuron)
+                neuron.addInputSinaps(sinaps)
                 sinaps.inputNeuron = previousLayer[k]
                 previousLayer[k].addOutputSinaps(sinaps)
             if isBiasNeuronEnabled:
                     sinaps = Sinaps(1, neuron) ## TODO: weight
+                    neuron.addInputSinaps(sinaps)
+                    sinaps.inputNeuron = previousLayer[-1]
                     previousLayer[-1].addOutputSinaps(sinaps)
 
     def calculateWithInput(self, inputValues, idealOutput):
-        self.output = []
         self.idealOutput = idealOutput
-        if len(inputValues) != (len(self.inputs) - 1):
+        if len(inputValues) != (len(self.inputs) - int(self.isBiasNeuronEnabled)):
             print("WARNING: ---Incorrect input for neuroNet---")
             return 1
 
-        for i in range(len(inputValues) - 1):
+        for i in range(len(inputValues)):
             self.inputs[i].value = inputValues[i]
             self.inputs[i].throwThrough()
         
-        for i in range(len(self.outputs)):
-            self.output.append(self.outputs[i].value)
         self.calcMSE(idealOutput)
 
     def calcMSE(self, idealOutput):
         result = 0
-        for i in range(len(self.output)):
-            result += (idealOutput[i] - self.output[i])**2
+        for i in range(len(self.outputs)):
+            result += (idealOutput[i] - self.outputs[i].value)**2
         
-        result = result/len(self.output)
+        result = result/len(self.outputs)
         self.MSE = result
 
     # def getSinapsesWeightMap(self):
@@ -98,7 +101,7 @@ class NeuroNet:
 
         # got layar from right. Take first neuron in layer and get its input sinapses to get lefter neurons
         rightNeuron = self.outputs[0]
-        while (rightNeuron):
+        while (not isinstance(rightNeuron, InputNeuron)):
             for inputSinaps in rightNeuron.inputSinaps:
                 neuron = inputSinaps.inputNeuron
                 for sinaps in neuron.outputSinaps:
@@ -151,7 +154,7 @@ class Neuron(object):
         self.value += sinaps.value
 
         # Check calculate all input sinaps
-        if ((len(self.inputSinaps) == 1) and (self.inputSinaps[0].inputNeuron is BiasNeuron)):
+        if ( (len(self.inputSinaps) == 1) and (isinstance(self.inputSinaps[0].inputNeuron, BiasNeuron)) ):
             self.value += self.inputSinaps[0].weight
             self.inputSinaps = []
         if (len(self.inputSinaps)):
@@ -219,7 +222,7 @@ class Sinaps:
         self.weight = weight
         self.outNeuron = outNeuron
         self.inputNeuron = 0
-        outNeuron.addInputSinaps(self)
+        # outNeuron.addInputSinaps(self)
         self.previousDelta = 0
     
     ###
@@ -231,7 +234,7 @@ class Sinaps:
 
 neuronList = [[[0.45, -0.12], [0.78, 0.13]],[[1.5, -2.3]]]
 viborka = [[[0, 0], [0]], [[0, 1], [1]], [[1, 0], [1]], [[1, 1], [0]]]
-net = NeuroNet(neuronList, 0.7, 0.3, True)
+net = NeuroNet(neuronList, 0.7, 0.3, False)
 for i in range(100000):
     mse = 0
     for v in viborka:
@@ -242,12 +245,15 @@ for i in range(100000):
         print(mse/4)
 
 # print(net.getSinapsesWeightMap())
+mse = 0
 for v in viborka:
     net.calculateWithInput(v[0], v[1])
     print("\n")
     print("Input: ", v[0], " Expected output: ", v[1])
-    print("Output: ", net.output)
+    print("Output: ", net.outputs[0].value)
     print("MSE: ", net.MSE)
+    mse += net.MSE
+print(mse/4)
 
     
 
