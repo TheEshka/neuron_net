@@ -1,0 +1,8 @@
+# Compiled byte-code
+__pycache__/
+*.py[cod]
+
+# Visual Studio Settings
+.vscode/
+
+test.py
