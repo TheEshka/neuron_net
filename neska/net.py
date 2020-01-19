@@ -1,6 +1,6 @@
 import random
-from sinaps import Sinaps
-from neuron import Neuron, InputNeuron, HiddenNeuron, OutputNeuron, BiasNeuron
+from .sinaps import Sinaps
+from .neuron import Neuron, InputNeuron, HiddenNeuron, OutputNeuron, BiasNeuron
 
 
 class NeuroNet:
