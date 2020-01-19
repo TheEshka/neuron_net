@@ -91,17 +91,20 @@ class NeuroNet:
         result = result/len(self.outputs)
         self.MSE = result
 
-    # def getSinapsesWeightMap(self):
-    #     allSinapses = []
-    #     for i in range(1, len(self.neurons)):
-    #         layerSinapses = []
-    #         for neuron in self.neurons[i]:
-    #             neuronSinaps = []
-    #             for sinaps in neuron.inputSinaps:
-    #                 neuronSinaps.append(sinaps.weight)
-    #             layerSinapses.append(neuronSinaps)
-    #         allSinapses.append(layerSinapses)
-    #     return allSinapses
+    def getSinapsesWeightMap(self):
+        allSinapses = []
+
+        neuron = self.inputs[0]
+        while (not isinstance(neuron, OutputNeuron)):
+            layerSinapses = []
+            for curSinaps in neuron.outputSinaps:
+                neuronSinapses = []
+                for sinaps in curSinaps.outNeuron.inputSinaps:
+                    neuronSinapses.append(float(sinaps.weight))
+                layerSinapses.append(neuronSinapses)
+            allSinapses.append(layerSinapses)
+            neuron = neuron.outputSinaps[0].outNeuron
+        return allSinapses
 
     def calcDeltas(self):
         """Calculate deltas and update weights
@@ -137,7 +140,7 @@ class NeuroNet:
     def __randomWeight():
         """__randomWeight() -> x: random Decimal number 
         """
-        return Decimal(random.random() * 2 - 1)
+        return Decimal(random.random() * 4 - 2)
 
     def __connect(self, sinaps, inputNeuron, outputNeuron):
         """Connect sinaps witn inputNeuron and outputNeuron

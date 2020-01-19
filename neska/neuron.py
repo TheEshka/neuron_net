@@ -50,7 +50,7 @@ class Neuron(object):
         if (len(self.outputSinaps)):
             for sinaps in self.outputSinaps:
                 sinaps.getInput(self.value)
-            self.value = Decimal(0)
+            # self.value = Decimal(0) # TODO nado li null
             return 
 
         return
