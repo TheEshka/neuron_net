@@ -2,8 +2,9 @@ from neska.net import NeuroNet
 
 neuronList = [[[0.45, -0.12], [0.78, 0.13]],[[1.5, -2.3]]]
 viborka = [[[0, 0], [0]], [[0, 1], [1]], [[1, 0], [1]], [[1, 1], [0]]]
-net = NeuroNet(neuronList, 0.7, 0.3, False)
-for i in range(1000):
+# net = NeuroNet(neuronList, 0.7, 0.3, False)
+net = NeuroNet.createNet([2,2,1], 0.7, 1, True)
+for i in range(10000):
     mse = 0
     for v in viborka:
         net.calculateWithInput(v[0], v[1])

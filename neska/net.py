@@ -8,7 +8,15 @@ class NeuroNet:
     @classmethod
     def createNet(cls, neuronList, E, A, isBiasNeuronEnabled = False):
         weightList = []
-        cls(weightList, E, A, isBiasNeuronEnabled)
+        for i in range(1, len(neuronList)):
+            layerWeightList = []
+            for _ in range(neuronList[i]):
+                neuronWeightList = []
+                for _ in range(neuronList[i-1]):
+                    neuronWeightList.append(NeuroNet.__randomWeight())
+                layerWeightList.append(neuronWeightList)
+            weightList.append(layerWeightList)
+        return cls(weightList, E, A, isBiasNeuronEnabled)
     
     def __init__(self, weightList, E, A, isBiasNeuronEnabled):
         self.E = E #learning rate
@@ -35,17 +43,9 @@ class NeuroNet:
                 neuron = HiddenNeuron()
                 currentLayer.append(neuron) 
                 for k in range(len(weightList[i][j])):
-                    sinaps = Sinaps(weightList[i][j][k])
-                    sinaps.outNeuron = neuron
-                    sinaps.inputNeuron = previousLayer[k]
-                    neuron.addInputSinaps(sinaps)
-                    previousLayer[k].addOutputSinaps(sinaps)
+                    self.__connect(Sinaps(weightList[i][j][k]), previousLayer[k], neuron)
                 if isBiasNeuronEnabled:
-                    sinaps = Sinaps(1) ## TODO: weight
-                    sinaps.outNeuron = neuron
-                    sinaps.inputNeuron = previousLayer[-1]
-                    neuron.addInputSinaps(sinaps)
-                    previousLayer[-1].addOutputSinaps(sinaps)
+                    self.__connect(Sinaps(self.__randomWeight()), previousLayer[-1], neuron)
             if isBiasNeuronEnabled:
                 currentLayer.append(BiasNeuron())
             previousLayer = currentLayer
@@ -57,17 +57,9 @@ class NeuroNet:
             neuron = OutputNeuron()
             self.outputs.append(neuron) 
             for k in range(len(weightList[i][j])):
-                sinaps = Sinaps(weightList[i][j][k])
-                sinaps.outNeuron = neuron
-                sinaps.inputNeuron = previousLayer[k]
-                neuron.addInputSinaps(sinaps)
-                previousLayer[k].addOutputSinaps(sinaps)
+                self.__connect(Sinaps(weightList[i][j][k]), previousLayer[k], neuron)
             if isBiasNeuronEnabled:
-                    sinaps = Sinaps(1) ## TODO: weight
-                    sinaps.outNeuron = neuron
-                    sinaps.inputNeuron = previousLayer[-1]
-                    neuron.addInputSinaps(sinaps)
-                    previousLayer[-1].addOutputSinaps(sinaps)
+                self.__connect(Sinaps(self.__randomWeight()), previousLayer[-1], neuron)
 
     def calculateWithInput(self, inputValues, idealOutput):
         self.idealOutput = idealOutput
@@ -130,3 +122,16 @@ class NeuroNet:
     def validateNeuronList(self, viborka):
         # TODO
         pass
+
+    @staticmethod
+    def __randomWeight():
+        return round(random.random() * 2 - 1, 2)
+
+    def __connect(self, sinaps, inputNeuron, outputNeuron):
+        """Connect sinaps witn inputNeuron and outputNeuron
+        """
+
+        sinaps.outNeuron = outputNeuron
+        sinaps.inputNeuron = inputNeuron
+        outputNeuron.addInputSinaps(sinaps)
+        inputNeuron.addOutputSinaps(sinaps)
