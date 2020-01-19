@@ -1,6 +1,10 @@
+import os, sys
+sys.path.append(os.path.join(os.path.dirname(__file__)))
+
 import random
-from .sinaps import Sinaps
-from .neuron import Neuron, InputNeuron, HiddenNeuron, OutputNeuron, BiasNeuron
+from decimal import Decimal
+from sinaps import Sinaps
+from neuron import Neuron, InputNeuron, HiddenNeuron, OutputNeuron, BiasNeuron
 
 
 class NeuroNet:
@@ -19,8 +23,8 @@ class NeuroNet:
         return cls(weightList, E, A, isBiasNeuronEnabled)
     
     def __init__(self, weightList, E, A, isBiasNeuronEnabled):
-        self.E = E #learning rate
-        self.A = A #momentum
+        self.E = Decimal(E) #learning rate
+        self.A = Decimal(A) #momentum
         self.inputs = []
         self.outputs = []
         self.idealOutput = []
@@ -43,7 +47,7 @@ class NeuroNet:
                 neuron = HiddenNeuron()
                 currentLayer.append(neuron) 
                 for k in range(len(weightList[i][j])):
-                    self.__connect(Sinaps(weightList[i][j][k]), previousLayer[k], neuron)
+                    self.__connect(Sinaps(Decimal(weightList[i][j][k])), previousLayer[k], neuron)
                 if isBiasNeuronEnabled:
                     self.__connect(Sinaps(self.__randomWeight()), previousLayer[-1], neuron)
             if isBiasNeuronEnabled:
@@ -57,12 +61,18 @@ class NeuroNet:
             neuron = OutputNeuron()
             self.outputs.append(neuron) 
             for k in range(len(weightList[i][j])):
-                self.__connect(Sinaps(weightList[i][j][k]), previousLayer[k], neuron)
+                self.__connect(Sinaps(Decimal(weightList[i][j][k])), previousLayer[k], neuron)
             if isBiasNeuronEnabled:
                 self.__connect(Sinaps(self.__randomWeight()), previousLayer[-1], neuron)
 
-    def calculateWithInput(self, inputValues, idealOutput):
-        self.idealOutput = idealOutput
+    def improveWithInputAndOutput(self, inputValues, idealOutput):
+        self.idealOutput = []
+        for a in idealOutput:
+            self.idealOutput.append(Decimal(a))
+
+        for i in range(len(inputValues)):
+            inputValues[i] = Decimal(inputValues[i])
+
         if len(inputValues) != (len(self.inputs) - int(self.isBiasNeuronEnabled)):
             print("WARNING: ---Incorrect input for neuroNet---")
             return 1
@@ -71,12 +81,12 @@ class NeuroNet:
             self.inputs[i].value = inputValues[i]
             self.inputs[i].throwThrough()
         
-        self.calcMSE(idealOutput)
+        self.calcMSE()
 
-    def calcMSE(self, idealOutput):
-        result = 0
+    def calcMSE(self):
+        result = Decimal(0)
         for i in range(len(self.outputs)):
-            result += (idealOutput[i] - self.outputs[i].value)**2
+            result += (self.idealOutput[i] - self.outputs[i].value)**2
         
         result = result/len(self.outputs)
         self.MSE = result
@@ -93,9 +103,9 @@ class NeuroNet:
     #         allSinapses.append(layerSinapses)
     #     return allSinapses
 
-    ###
-    ### Calculate deltas and update weights
     def calcDeltas(self):
+        """Calculate deltas and update weights
+        """
 
         for i in range(len(self.outputs)):
             neuron = self.outputs[i]
@@ -125,12 +135,13 @@ class NeuroNet:
 
     @staticmethod
     def __randomWeight():
-        return round(random.random() * 2 - 1, 2)
+        """__randomWeight() -> x: random Decimal number 
+        """
+        return Decimal(random.random() * 2 - 1)
 
     def __connect(self, sinaps, inputNeuron, outputNeuron):
         """Connect sinaps witn inputNeuron and outputNeuron
         """
-
         sinaps.outNeuron = outputNeuron
         sinaps.inputNeuron = inputNeuron
         outputNeuron.addInputSinaps(sinaps)

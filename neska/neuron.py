@@ -1,34 +1,39 @@
 import math
+from decimal import Decimal
 
 class Neuron(object):
 
     def __init__(self):
-        self.value = 0
+        self.value = Decimal(0)
         self.inputSinaps = []
         self.outputSinaps = []
         self.__cacheOfInput = [] ## TODO: change kostil
-        self.delta = 0
+        self.delta = Decimal(0)
 
-    ###
-    ### Add inputSinaps for initialization net
+
     def addInputSinaps(self, sinaps):
+        """Add inputSinaps for initialization net
+        """
+
         if (self.__checkExist(sinaps)):
             print("WARNING: ---Trying add repeating INPUT sinaps---")
             return
         self.inputSinaps.append(sinaps)
         self.__cacheOfInput.append(sinaps)
 
-    ###
-    ### Add for initialization net
     def addOutputSinaps(self, sinaps):
+        """Add for initialization net
+        """
+
         if (self.__checkExist(sinaps)):
             print("WARNING: ---Trying add repeating OUTPUT sinaps---")
             return
         self.outputSinaps.append(sinaps)
     
-    ###
-    ### Add value from sinaps with triggering sinaps
     def addValue(self, sinaps):
+        """Add value from sinaps with triggering sinaps
+        """
+        
         self.inputSinaps.remove(sinaps)
         self.value += sinaps.value
 
@@ -45,10 +50,9 @@ class Neuron(object):
         if (len(self.outputSinaps)):
             for sinaps in self.outputSinaps:
                 sinaps.getInput(self.value)
+            self.value = Decimal(0)
             return 
 
-        # this is output sinaps
-        # print("-------Output neuron reached-------")
         return
     
     def __checkExist(self, checkingSinaps):
@@ -64,10 +68,11 @@ class Neuron(object):
         
         return False
     
-    ###
-    ### Activation function
     def __calcSigmoid(self):
-        self.value = 1/(1 + math.exp(-self.value))
+        """Activation function
+        """
+        expo = Decimal(math.exp(1))
+        self.value = 1/(1 + expo**(-self.value))
 
 
 class InputNeuron(Neuron):
