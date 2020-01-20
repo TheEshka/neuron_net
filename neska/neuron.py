@@ -33,6 +33,9 @@ class Neuron(object):
     def addValue(self, sinaps):
         """Add value from sinaps with triggering sinaps
         """
+
+        if len(self.__cacheOfInput) == len(self.inputSinaps): #TODO to net.py
+            self.value = Decimal(0)
         
         self.inputSinaps.remove(sinaps)
         self.value += sinaps.value
@@ -40,6 +43,7 @@ class Neuron(object):
         # Check calculate all input sinaps
         if ( (len(self.inputSinaps) == 1) and (isinstance(self.inputSinaps[0].inputNeuron, BiasNeuron)) ):
             self.value += self.inputSinaps[0].weight
+            self.inputSinaps[0].inputNeuron.value = self.inputSinaps[0].weight #for not non-zero value for bias neuron
             self.inputSinaps = []
         if (len(self.inputSinaps)):
             return
@@ -50,7 +54,6 @@ class Neuron(object):
         if (len(self.outputSinaps)):
             for sinaps in self.outputSinaps:
                 sinaps.getInput(self.value)
-            # self.value = Decimal(0) # TODO nado li null
             return 
 
         return

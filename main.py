@@ -1,4 +1,5 @@
 from neska.net import NeuroNet
+from decimal import Decimal
 
 # neuronList = [[[0.45, -0.12], [0.78, 0.13]],[[1.5, -2.3]]]
 # viborka = [[[0, 0], [0]], [[0, 1], [1]], [[1, 0], [1]], [[1, 1], [0]]]
@@ -26,29 +27,47 @@ from neska.net import NeuroNet
 
 
 
+def normilize(qwe): #TODO: to net.py
+    x_min = 0
+    x_max = 105
+    d_min = 0
+    d_max = 1
+    qwe = (qwe - x_min)*(d_max - d_min)/(x_max - x_min) + d_min
+    return Decimal(qwe)
 
+def denormalize(asd):
+    x_min = 0
+    x_max = 105
+    d_min = 0
+    d_max = 1
+    asd = (asd - d_min)*(x_max - x_min)/(d_max - d_min) + x_min
+    return asd
 
-
+viborka = [
+    [[normilize(0)], [normilize(32)]], 
+    [[normilize(8)], [normilize(46.4)]],
+    [[normilize(15)], [normilize(59)]],
+    [[normilize(22)], [normilize(71.6)]], 
+    [[normilize(38)], [normilize(100.4)]]
+]
 
 neuronList = [[[0.5]], [[-2.3]]]
-viborka = [[[0], [1/32]], [[1/8], [1/46.4]], [[1/15], [1/59]], [[1/22], [1/71.6]], [[1/38], [1/100.4]]]
+# viborka = [[[0], [1/32]], [[1/8], [1/46.4]], [[1/15], [1/59]], [[1/22], [1/71.6]], [[1/38], [1/100.4]]]
 # net = NeuroNet(neuronList, 0.4, 0.3, True)
-net = NeuroNet.createNet([1,3,1], 0.4, 0.3, True)
+net = NeuroNet.createNet([1, 1, 1], 0.7, 0.3, True)
 print(net.getSinapsesWeightMap())
-net.train(viborka, 1000)
+net.train(viborka, 4000)
 print(net.getSinapsesWeightMap())
 
-mse = 0
 for v in viborka:
     r = net.calcForInputWithIdealOutput(v[0], v[1])
     print("\n")
-    print("Input: ", v[0][0], " Expected output: ", v[1][0])
-    print("Output: ", 1/r[0])
+    print("Input: ", denormalize(v[0][0]), " Expected output: ", denormalize(v[1][0]))
+    print("Output: ", denormalize(r[0]))
     print("MSE: ", net.MSE)
-print(mse/4)
 
-net.calcForInput([12]) #53.6
-print(1/net.outputs[0].value)
+net.calcForInput([normilize(12)]) #53.6
+print(denormalize(net.outputs[0].value))
 
 
 
