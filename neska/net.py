@@ -65,33 +65,56 @@ class NeuroNet:
             if isBiasNeuronEnabled:
                 self.__connect(Sinaps(self.__randomWeight()), previousLayer[-1], neuron)
 
-    def improveWithInputAndOutput(self, inputValues, idealOutput):
-        self.idealOutput = []
-        for a in idealOutput:
-            self.idealOutput.append(Decimal(a))
-
+    def calcForInput(self, inputValues):
+        """-> [float] : Calculate output for inputs and return array of floats. 
+        """
         for i in range(len(inputValues)):
             inputValues[i] = Decimal(inputValues[i])
-
-        if len(inputValues) != (len(self.inputs) - int(self.isBiasNeuronEnabled)):
-            print("WARNING: ---Incorrect input for neuroNet---")
-            return 1
 
         for i in range(len(inputValues)):
             self.inputs[i].value = inputValues[i]
             self.inputs[i].throwThrough()
-        
-        self.calcMSE()
 
-    def calcMSE(self):
+        result = []
+        for output in self.outputs:
+            result.append(float(output.value))
+        return result
+
+    def calcForInputWithIdealOutput(self, inputValues, idealOutput):
+        """->[float]: Calculate for input with self.calcForInput(inputValues). 
+        Calculate error with self.calcMSE()
+        """
+
+        self.idealOutput = []
+        for a in idealOutput:
+            self.idealOutput.append(Decimal(a))
+
+        result = self.calcForInput(inputValues)
+        self.calcMSE()
+        return result
+
+    def calcMSE(self, idealOutput = []):
+        """->MSE. Calculate MSE for self.outputs and self.idealOuput
+        """
+        if not len(idealOutput):
+            idealOutput = self.idealOutput
+        else:
+            for i in range(len(idealOutput)):
+                idealOutput[i] = Decimal(i)
         result = Decimal(0)
         for i in range(len(self.outputs)):
-            result += (self.idealOutput[i] - self.outputs[i].value)**2
+            result += (idealOutput[i] - self.outputs[i].value)**2
         
         result = result/len(self.outputs)
         self.MSE = result
+        return self.MSE
 
     def getSinapsesWeightMap(self):
+        """Get sinapses weight map. 
+        Every elemnt consist of sinapses between two neuron layers
+        And each such layer consist of element, describing input sinapses weights of single neuron
+        """
+
         allSinapses = []
 
         neuron = self.inputs[0]
@@ -128,9 +151,18 @@ class NeuroNet:
                 neuron.delta *= (1 - neuron.value) * neuron.value
             rightNeuron = rightNeuron.inputSinaps[0].inputNeuron
 
-    def train(self, viborka):
-        # TODO
-        pass
+    def train(self, viborka, epoch):
+        inputLen = len(viborka[0][0])
+        outputLen = len(viborka[0][1])
+
+        for v in viborka:
+            if (len(v[0]) != inputLen) or (len(v[1]) != outputLen):
+                print("WARNING: ---Incorrect VIBORKA for neuroNet---")
+                return 1
+        for _ in range(epoch):
+            for v in viborka:
+                self.calcForInputWithIdealOutput(v[0], v[1])
+                self.calcDeltas()
 
     def validateNeuronList(self, viborka):
         # TODO
