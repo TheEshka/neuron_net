@@ -51,10 +51,11 @@ viborka = [
     [[normilize(38)], [normilize(100.4)]]
 ]
 
-neuronList = [[[0.5]], [[-2.3]]]
+neuronList = [[[-1.1480110551817493, 1.37097896611021]], [[0.6893808129013457, 1.2392702577003245]]]
+# neuronList = [[[-6.201413597258762, 1.961061194640626]], [[-7.347050137648256, 5.694153069720562]]]
 # viborka = [[[0], [1/32]], [[1/8], [1/46.4]], [[1/15], [1/59]], [[1/22], [1/71.6]], [[1/38], [1/100.4]]]
 # net = NeuroNet(neuronList, 0.4, 0.3, True)
-net = NeuroNet.createNet([1, 1, 1], 0.7, 0.3, True)
+net = NeuroNet.createNet([1, 1, 1], 0.4, 0.3, True)
 print(net.getSinapsesWeightMap())
 net.train(viborka, 4000)
 print(net.getSinapsesWeightMap())

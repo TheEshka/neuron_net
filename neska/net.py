@@ -16,7 +16,7 @@ class NeuroNet:
             layerWeightList = []
             for _ in range(neuronList[i]):
                 neuronWeightList = []
-                for _ in range(neuronList[i-1]):
+                for _ in range(neuronList[i-1] + int(isBiasNeuronEnabled)):
                     neuronWeightList.append(NeuroNet.__randomWeight())
                 layerWeightList.append(neuronWeightList)
             weightList.append(layerWeightList)
@@ -34,22 +34,20 @@ class NeuroNet:
         # Creating input layer neurons
         currentLayer = []
         previousLayer = []
-        for i in range(len(weightList[0][0])):
+        for i in range(len(weightList[0][0]) - int(isBiasNeuronEnabled)):
             self.inputs.append(InputNeuron())
         if isBiasNeuronEnabled:
             self.inputs.append(BiasNeuron())
         previousLayer = self.inputs
 
         # Creating hidden layer neurons
-        for i in range(len(weightList) - 1):
+        for i in range(len(weightList) - 1): # -1 because start from second neuron layer
             currentLayer = []
-            for j in range(len(weightList[i])):
+            for j in range(len(weightList[i])): # -1 because last check on bias neuron
                 neuron = HiddenNeuron()
                 currentLayer.append(neuron) 
                 for k in range(len(weightList[i][j])):
                     self.__connect(Sinaps(Decimal(weightList[i][j][k])), previousLayer[k], neuron)
-                if isBiasNeuronEnabled:
-                    self.__connect(Sinaps(self.__randomWeight()), previousLayer[-1], neuron)
             if isBiasNeuronEnabled:
                 currentLayer.append(BiasNeuron())
             previousLayer = currentLayer
@@ -62,8 +60,6 @@ class NeuroNet:
             self.outputs.append(neuron) 
             for k in range(len(weightList[i][j])):
                 self.__connect(Sinaps(Decimal(weightList[i][j][k])), previousLayer[k], neuron)
-            if isBiasNeuronEnabled:
-                self.__connect(Sinaps(self.__randomWeight()), previousLayer[-1], neuron)
 
     def calcForInput(self, inputValues):
         """-> [float] : Calculate output for inputs and return array of floats. 
